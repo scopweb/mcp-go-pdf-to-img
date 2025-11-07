@@ -1,0 +1,71 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+# Go files - use tabs for indentation (Go standard)
+[*.go]
+indent_style = tab
+indent_size = 8
+
+# Go test files
+[*_test.go]
+indent_style = tab
+indent_size = 8
+
+# YAML files - use 2 spaces
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# JSON files - use 2 spaces
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Markdown files - preserve trailing whitespace for line breaks
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
+
+# Dockerfile
+[Dockerfile]
+indent_style = space
+indent_size = 2
+
+# Shell scripts
+[*.sh]
+indent_style = space
+indent_size = 2
+
+# Batch files
+[*.bat]
+indent_style = space
+indent_size = 2
+
+# Makefile - must use tabs
+[Makefile]
+indent_style = tab
+
+# Configuration files
+[{.gitignore,go.mod,go.sum}]
+indent_style = space
+indent_size = 2
+
+# Protocol buffers
+[*.proto]
+indent_style = space
+indent_size = 2
+
+# .editorconfig file itself
+[.editorconfig]
+indent_style = space
+indent_size = 2

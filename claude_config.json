@@ -1,0 +1,33 @@
+{
+  "name": "pdf2img",
+  "description": "PDF to Image Converter - Convert PDF pages to PNG or JPG images",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "license": "Apache 2.0",
+  "mcpServers": {
+    "pdf2img": {
+      "command": "mcp-server",
+      "args": ["--stdio"],
+      "env": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "pdf_to_images",
+      "description": "Convert PDF pages to PNG or JPG images with configurable DPI",
+      "category": "document-processing",
+      "enabled": true
+    },
+    {
+      "name": "pdf_info",
+      "description": "Get information about a PDF file (pages, dimensions, file size)",
+      "category": "document-processing",
+      "enabled": true
+    }
+  ],
+  "settings": {
+    "defaultFormat": "png",
+    "defaultDPI": 150,
+    "defaultPrefix": "page_"
+  }
+}

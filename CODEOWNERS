@@ -1,0 +1,49 @@
+# CODEOWNERS - Code ownership and review requirements
+# This file defines who should be pinged for reviews of code changes
+# https://help.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners
+
+# Default owners for all files in the repository
+* @tu-usuario
+
+# CLI Command
+/cmd/pdf2img/ @tu-usuario
+
+# MCP Server Implementation
+/cmd/mcp-server/ @tu-usuario
+/mcp/ @tu-usuario
+
+# Core Converter Library
+/pkg/converter/ @tu-usuario
+
+# Security Tests
+/test/security/ @tu-usuario
+
+# Configuration Files
+/.gitignore @tu-usuario
+/go.mod @tu-usuario
+/go.sum @tu-usuario
+/Makefile @tu-usuario
+/.editorconfig @tu-usuario
+/.golangci.yml @tu-usuario
+
+# Documentation
+/*.md @tu-usuario
+/docs/ @tu-usuario
+
+# GitHub Configuration
+/.github/ @tu-usuario
+
+# Build Scripts
+/scripts/ @tu-usuario
+
+# License and Contributing
+LICENSE @tu-usuario
+CONTRIBUTING.md @tu-usuario
+CODE_OF_CONDUCT.md @tu-usuario
+SECURITY.md @tu-usuario
+CODEOWNERS @tu-usuario
+
+# Notes:
+# - Add more maintainers as the project grows
+# - Use GitHub teams for better organization
+# - Example: /cmd/ @organization/backend-team

@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(tree:*)",
+      "Bash(awk:*)",
+      "Bash(go mod download:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)",
+      "Bash(.pdf2img.exe:*)",
+      "Bash(\"C:\\MCPs\\clone_PROYECTOS\\mcp-go-pdf-to-img-2\\pdf2img.exe\" -i example.pdf -o output -f png)",
+      "Bash(\"C:\\MCPs\\clone_PROYECTOS\\mcp-go-pdf-to-img-2\\pdf2img.exe\" -i example.pdf -o output -f jpg -d 200)",
+      "Bash(\"C:\\MCPs\\clone_PROYECTOS\\mcp-go-pdf-to-img-2\\pdf2img.exe\" info example.pdf)",
+      "Bash(\"C:\\MCPs\\clone_PROYECTOS\\mcp-go-pdf-to-img-2\\pdf2img.exe\" -i example.pdf -o output -f png -d 150)",
+      "Bash(go test:*)",
+      "Bash(go get:*)",
+      "Bash(go list:*)",
+      "Bash(\"c:\\MCPs\\clone_PROYECTOS\\mcp-go-pdf-to-img-2\\mcp-server.exe\" -h)",
+      "Bash(curl:*)",
+      "Bash(git init:*)",
+      "Bash(git config:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
