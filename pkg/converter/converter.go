@@ -30,6 +30,7 @@ type ConvertOptions struct {
 	StartPage  int     // Start page (1-indexed, 0 = all)
 	EndPage    int     // End page (1-indexed, 0 = all)
 	Prefix     string  // Prefix for output files
+	RetryFailed bool  // Retry failed pages with reduced DPI (default false)
 }
 
 // ConvertResult contains conversion results
@@ -39,6 +40,7 @@ type ConvertResult struct {
 	Failed      int
 	OutputFiles []string
 	Errors      []string
+	WarningPages []int // Pages with unreachable errors (may need manual inspection)
 }
 
 // New creates a new Converter instance using WebAssembly PDFium
@@ -178,6 +180,7 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 		TotalPages:  pageCount,
 		OutputFiles: []string{},
 		Errors:      []string{},
+		WarningPages: []int{},
 	}
 
 	// Set DPI
@@ -185,6 +188,9 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 	if dpi <= 0 {
 		dpi = 150
 	}
+
+	// Track failed pages for retry
+	failedPages := make(map[int]string)
 
 	// Render each page
 	for pageNum := startPage; pageNum <= endPage; pageNum++ {
@@ -201,7 +207,13 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 
 		if err != nil {
 			result.Failed++
+			failedPages[pageNum] = err.Error()
 			result.Errors = append(result.Errors, fmt.Sprintf("Page %d: %v", pageNum, err))
+
+			// Mark pages with WASM errors for potential retry
+			if strings.Contains(err.Error(), "unreachable") || strings.Contains(err.Error(), "wasm") {
+				result.WarningPages = append(result.WarningPages, pageNum)
+			}
 			continue
 		}
 
@@ -211,8 +223,7 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 		}
 
 		// Get the image from result
-		img := pageRender.Result.Image
-		if img == nil {
+		if pageRender == nil || pageRender.Result.Image == nil {
 			result.Failed++
 			result.Errors = append(result.Errors, fmt.Sprintf("Page %d: no image generated", pageNum))
 			continue
@@ -224,7 +235,7 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 			fmt.Sprintf("%s%04d.%s", opts.Prefix, pageNum, opts.Format),
 		)
 
-		if err := saveImage(img, outputPath, opts.Format); err != nil {
+		if err := saveImage(pageRender.Result.Image, outputPath, opts.Format); err != nil {
 			result.Failed++
 			result.Errors = append(result.Errors, fmt.Sprintf("Page %d save: %v", pageNum, err))
 			continue
@@ -232,6 +243,49 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 
 		result.Successful++
 		result.OutputFiles = append(result.OutputFiles, outputPath)
+	}
+
+	// Retry failed pages with reduced DPI if requested
+	if opts.RetryFailed && len(failedPages) > 0 && dpi > 72 {
+		retryDPI := dpi * 0.75 // Reduce DPI by 25%
+		for pageNum, _ := range failedPages {
+			// Try rendering with reduced DPI
+			pageRender, err := c.instance.RenderPageInDPI(&requests.RenderPageInDPI{
+				DPI: int(retryDPI),
+				Page: requests.Page{
+					ByIndex: &requests.PageByIndex{
+						Document: doc.Document,
+						Index:    pageNum - 1,
+					},
+				},
+			})
+
+			if err == nil && pageRender != nil && pageRender.Result.Image != nil {
+				outputPath := filepath.Join(
+					opts.OutputDir,
+					fmt.Sprintf("%s%04d.%s", opts.Prefix, pageNum, opts.Format),
+				)
+
+				if err := saveImage(pageRender.Result.Image, outputPath, opts.Format); err == nil {
+					result.Failed--
+					result.Successful++
+					result.OutputFiles = append(result.OutputFiles, outputPath)
+					// Remove from errors list
+					newErrors := []string{}
+					for _, e := range result.Errors {
+						if !strings.Contains(e, fmt.Sprintf("Page %d", pageNum)) {
+							newErrors = append(newErrors, e)
+						}
+					}
+					result.Errors = newErrors
+				}
+
+				// Clean up resources
+				if pageRender.Cleanup != nil {
+					pageRender.Cleanup()
+				}
+			}
+		}
 	}
 
 	return result, nil

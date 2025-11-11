@@ -10,14 +10,15 @@ import (
 )
 
 var (
-	inputFile  string
-	outputDir  string
-	format     string
-	dpi        float64
-	startPage  int
-	endPage    int
-	prefix     string
-	verbose    bool
+	inputFile   string
+	outputDir   string
+	format      string
+	dpi         float64
+	startPage   int
+	endPage     int
+	prefix      string
+	verbose     bool
+	retryFailed bool
 )
 
 var rootCmd = &cobra.Command{
@@ -45,6 +46,7 @@ func init() {
 	rootCmd.Flags().IntVar(&endPage, "end", 0, "End page number (1-indexed, 0 for last)")
 	rootCmd.Flags().StringVar(&prefix, "prefix", "page_", "Prefix for output files (default: page_)")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
+	rootCmd.Flags().BoolVar(&retryFailed, "retry", false, "Retry failed pages with reduced DPI")
 
 	rootCmd.MarkFlagRequired("input")
 	rootCmd.AddCommand(infoCmd)
@@ -67,13 +69,14 @@ func runConvert(cmd *cobra.Command, args []string) error {
 
 	// Prepare options
 	opts := &converter.ConvertOptions{
-		InputPath:  inputFile,
-		OutputDir:  outputDir,
-		Format:     format,
-		DPI:        dpi,
-		StartPage:  startPage,
-		EndPage:    endPage,
-		Prefix:     prefix,
+		InputPath:   inputFile,
+		OutputDir:   outputDir,
+		Format:      format,
+		DPI:         dpi,
+		StartPage:   startPage,
+		EndPage:     endPage,
+		Prefix:      prefix,
+		RetryFailed: retryFailed,
 	}
 
 	if verbose {
@@ -101,11 +104,22 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if len(result.WarningPages) > 0 {
+		fmt.Println("\n⚠ Pages with WASM/unreachable errors (may need manual inspection):")
+		for _, pageNum := range result.WarningPages {
+			fmt.Printf("  - Page %d\n", pageNum)
+		}
+	}
+
 	if len(result.Errors) > 0 {
 		fmt.Println("\nErrors:")
 		for _, errMsg := range result.Errors {
 			fmt.Printf("  - %s\n", errMsg)
 		}
+	}
+
+	if retryFailed && len(result.Errors) > 0 {
+		fmt.Println("\nTip: Some pages failed. Try running with --retry flag to attempt rendering with reduced DPI.")
 	}
 
 	return nil
