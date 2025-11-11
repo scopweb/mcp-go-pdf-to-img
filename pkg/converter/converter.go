@@ -237,7 +237,7 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 	_ = poolSize      // Keep the parameter for future use
 
 	// Process pages in chunks to prevent WASM state accumulation
-	// After each chunk, close and reopen the document to reset internal state
+	// After each chunk, close document and refresh the entire WASM instance
 	chunkSize := refreshEvery
 	if chunkSize <= 0 {
 		chunkSize = 50 // Default chunk size
@@ -304,14 +304,20 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 		pagesProcessed++
 		}
 
-		// After processing chunk, close and reopen document to reset WASM state
+		// After processing chunk, close document and refresh WASM instance to reset state
 		if chunkEnd < endPage {
 			// Close current document
 			c.instance.FPDF_CloseDocument(&requests.FPDF_CloseDocument{
 				Document: doc.Document,
 			})
 
-			// Reopen document from bytes
+			// Refresh the entire WASM instance to clear accumulated state
+			if err := c.refreshInstance(); err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Error refreshing instance after page %d: %v", chunkEnd, err))
+				break // Stop processing if we can't refresh
+			}
+
+			// Reopen document from bytes in the fresh instance
 			newDoc, err := c.instance.OpenDocument(&requests.OpenDocument{
 				File: &pdfBytes,
 			})
