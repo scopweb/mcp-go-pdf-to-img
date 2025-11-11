@@ -234,15 +234,14 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 	failedPages := make(map[int]string)
 	pagesProcessed := 0
 
+	// Note: Instance refresh has been disabled because it closes the document.
+	// Instead, we rely on the pool with larger MaxTotal to handle memory better.
+	// Users can configure pool-size for their hardware needs.
+	_ = refreshEvery  // Keep the parameter but don't use it
+	_ = poolSize      // Keep the parameter but don't use it
+
 	// Render each page
 	for pageNum := startPage; pageNum <= endPage; pageNum++ {
-		// Periodically refresh the instance to avoid memory accumulation
-		if pagesProcessed > 0 && pagesProcessed%refreshEvery == 0 {
-			if err := c.refreshInstance(); err != nil {
-				// Log warning but continue
-				result.Errors = append(result.Errors, fmt.Sprintf("Warning: failed to refresh PDFium instance at page %d: %v", pageNum, err))
-			}
-		}
 		// Render page to image
 		pageRender, err := c.instance.RenderPageInDPI(&requests.RenderPageInDPI{
 			DPI: int(dpi),
