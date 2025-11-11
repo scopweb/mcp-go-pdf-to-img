@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2025-11-11)
+- **Enhanced Error Handling for Large PDFs**
+  - Detection and tracking of WASM "unreachable" errors
+  - Separate `WarningPages` field in conversion results
+  - Better diagnostic information for problematic pages
+
+- **Memory Management for Large PDFs (200+ pages)**
+  - Increased default PDFium pool size from 1 to 2 instances
+  - Periodic instance refresh every 50 pages (configurable)
+  - `NewWithPoolSize()` function for custom pool sizing
+  - Graceful handling of refresh failures
+
+- **New CLI Flags**
+  - `--retry`: Retry failed pages with 75% reduced DPI
+  - `--pool-size`: Configure max PDFium instances (default: 2)
+  - `--refresh-every`: Set instance refresh interval in pages (default: 50)
+
+- **Improved Retry Logic**
+  - Automatic retry of failed pages with reduced DPI (75%)
+  - Removal of retried pages from error lists on success
+  - Resource cleanup after successful retries
+
+### Fixed
+- WASM memory accumulation issues during long conversion sessions
+- "unreachable" errors on pages 100+ in large PDFs
+- Memory corruption after processing 50+ pages with single instance
+
+### Technical Improvements
+- Better resource cleanup in refresh cycle
+- Configurable pool management for different hardware
+- Enhanced page-by-page error tracking
+- Graceful degradation when refresh fails
+
 ### Planned
 - [ ] OCR de imágenes renderizadas
 - [ ] Procesamiento paralelo de páginas
@@ -182,6 +215,6 @@ Do not create public issues for security problems.
 
 ---
 
-**Last Updated**: 2025-11-07
-**Current Version**: 1.0.0
+**Last Updated**: 2025-11-11
+**Current Version**: 1.0.0 (with unreleased improvements)
 **License**: Apache 2.0
