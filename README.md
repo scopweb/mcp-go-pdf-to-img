@@ -286,17 +286,12 @@ WebAssembly was chosen over CGO because:
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
 - **[MCP_CLAUDE_DESKTOP.md](MCP_CLAUDE_DESKTOP.md)** - Claude Desktop integration
 - **[MCP_TROUBLESHOOTING.md](MCP_TROUBLESHOOTING.md)** - MCP troubleshooting
-
-### Internal Documentation
-- **[docs/README.md](docs/README.md)** - Internal documentation index
-- **[docs/STATUS.md](docs/STATUS.md)** - Project status
-- **[docs/SECURITY_TEST_RESULTS.md](docs/SECURITY_TEST_RESULTS.md)** - Security tests
-- **[docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md)** - Technical notes
-
-### More Information
 - **[CHANGELOG.md](CHANGELOG.md)** - Change history
 - **[SECURITY.md](SECURITY.md)** - Security policy
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** - Code of conduct
+
+### Internal Documentation
+For maintainers and detailed technical information, see [docs/README.md](docs/README.md)
 
 ---
 
