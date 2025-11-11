@@ -234,14 +234,24 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 	failedPages := make(map[int]string)
 	pagesProcessed := 0
 
-	// Note: Instance refresh has been disabled because it closes the document.
-	// Instead, we rely on the pool with larger MaxTotal to handle memory better.
-	// Users can configure pool-size for their hardware needs.
-	_ = refreshEvery  // Keep the parameter but don't use it
-	_ = poolSize      // Keep the parameter but don't use it
+	_ = poolSize      // Keep the parameter for future use
 
-	// Render each page
-	for pageNum := startPage; pageNum <= endPage; pageNum++ {
+	// Process pages in chunks to prevent WASM state accumulation
+	// After each chunk, close and reopen the document to reset internal state
+	chunkSize := refreshEvery
+	if chunkSize <= 0 {
+		chunkSize = 50 // Default chunk size
+	}
+
+	currentPage := startPage
+	for currentPage <= endPage {
+		chunkEnd := currentPage + chunkSize - 1
+		if chunkEnd > endPage {
+			chunkEnd = endPage
+		}
+
+		// Render pages in this chunk
+		for pageNum := currentPage; pageNum <= chunkEnd; pageNum++ {
 		// Render page to image
 		pageRender, err := c.instance.RenderPageInDPI(&requests.RenderPageInDPI{
 			DPI: int(dpi),
@@ -292,6 +302,27 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 		result.Successful++
 		result.OutputFiles = append(result.OutputFiles, outputPath)
 		pagesProcessed++
+		}
+
+		// After processing chunk, close and reopen document to reset WASM state
+		if chunkEnd < endPage {
+			// Close current document
+			c.instance.FPDF_CloseDocument(&requests.FPDF_CloseDocument{
+				Document: doc.Document,
+			})
+
+			// Reopen document from bytes
+			newDoc, err := c.instance.OpenDocument(&requests.OpenDocument{
+				File: &pdfBytes,
+			})
+			if err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Error reopening document after page %d: %v", chunkEnd, err))
+				break // Stop processing if we can't reopen
+			}
+			doc = newDoc
+		}
+
+		currentPage = chunkEnd + 1
 	}
 
 	// Retry failed pages with reduced DPI if requested
