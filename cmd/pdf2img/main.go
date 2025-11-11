@@ -10,15 +10,17 @@ import (
 )
 
 var (
-	inputFile   string
-	outputDir   string
-	format      string
-	dpi         float64
-	startPage   int
-	endPage     int
-	prefix      string
-	verbose     bool
-	retryFailed bool
+	inputFile    string
+	outputDir    string
+	format       string
+	dpi          float64
+	startPage    int
+	endPage      int
+	prefix       string
+	verbose      bool
+	retryFailed  bool
+	maxPoolSize  int
+	refreshEvery int
 )
 
 var rootCmd = &cobra.Command{
@@ -47,6 +49,8 @@ func init() {
 	rootCmd.Flags().StringVar(&prefix, "prefix", "page_", "Prefix for output files (default: page_)")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	rootCmd.Flags().BoolVar(&retryFailed, "retry", false, "Retry failed pages with reduced DPI")
+	rootCmd.Flags().IntVar(&maxPoolSize, "pool-size", 2, "Max PDFium instances in pool (default: 2, increase for large PDFs)")
+	rootCmd.Flags().IntVar(&refreshEvery, "refresh-every", 50, "Refresh PDFium instance every N pages (default: 50, 0 to disable)")
 
 	rootCmd.MarkFlagRequired("input")
 	rootCmd.AddCommand(infoCmd)
@@ -69,14 +73,16 @@ func runConvert(cmd *cobra.Command, args []string) error {
 
 	// Prepare options
 	opts := &converter.ConvertOptions{
-		InputPath:   inputFile,
-		OutputDir:   outputDir,
-		Format:      format,
-		DPI:         dpi,
-		StartPage:   startPage,
-		EndPage:     endPage,
-		Prefix:      prefix,
-		RetryFailed: retryFailed,
+		InputPath:    inputFile,
+		OutputDir:    outputDir,
+		Format:       format,
+		DPI:          dpi,
+		StartPage:    startPage,
+		EndPage:      endPage,
+		Prefix:       prefix,
+		RetryFailed:  retryFailed,
+		MaxPoolSize:  maxPoolSize,
+		RefreshEvery: refreshEvery,
 	}
 
 	if verbose {

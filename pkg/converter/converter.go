@@ -23,14 +23,16 @@ type Converter struct {
 
 // ConvertOptions specifies conversion parameters
 type ConvertOptions struct {
-	InputPath  string  // Path to PDF file
-	OutputDir  string  // Output directory
-	Format     string  // "png" or "jpg"
-	DPI        float64 // DPI for rendering (default 150)
-	StartPage  int     // Start page (1-indexed, 0 = all)
-	EndPage    int     // End page (1-indexed, 0 = all)
-	Prefix     string  // Prefix for output files
-	RetryFailed bool  // Retry failed pages with reduced DPI (default false)
+	InputPath    string  // Path to PDF file
+	OutputDir    string  // Output directory
+	Format       string  // "png" or "jpg"
+	DPI          float64 // DPI for rendering (default 150)
+	StartPage    int     // Start page (1-indexed, 0 = all)
+	EndPage      int     // End page (1-indexed, 0 = all)
+	Prefix       string  // Prefix for output files
+	RetryFailed  bool    // Retry failed pages with reduced DPI (default false)
+	MaxPoolSize  int     // Max PDFium instances in pool (default 2, increase for large PDFs)
+	RefreshEvery int     // Refresh PDFium instance every N pages (0 = disable, default 50)
 }
 
 // ConvertResult contains conversion results
@@ -45,11 +47,21 @@ type ConvertResult struct {
 
 // New creates a new Converter instance using WebAssembly PDFium
 func New() (*Converter, error) {
+	return NewWithPoolSize(2)
+}
+
+// NewWithPoolSize creates a new Converter with a specific pool size
+func NewWithPoolSize(poolSize int) (*Converter, error) {
+	if poolSize < 1 {
+		poolSize = 2
+	}
+
 	// Initialize PDFium pool (WebAssembly - pure Go)
+	// Larger pool helps prevent memory issues with large PDFs
 	pool, err := webassembly.Init(webassembly.Config{
 		MinIdle:  1,
-		MaxIdle:  1,
-		MaxTotal: 1,
+		MaxIdle:  poolSize,
+		MaxTotal: poolSize,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize PDFium pool: %w", err)
@@ -77,6 +89,23 @@ func (c *Converter) Close() error {
 	if c.pool != nil {
 		c.pool.Close()
 	}
+	return nil
+}
+
+// refreshInstance returns the current instance to the pool and gets a fresh one
+// This helps prevent memory accumulation during processing of large PDFs
+func (c *Converter) refreshInstance() error {
+	if c.instance != nil {
+		c.instance.Close()
+	}
+
+	// Get a fresh instance from the pool
+	instance, err := c.pool.GetInstance(time.Second * 30)
+	if err != nil {
+		return fmt.Errorf("failed to get fresh PDFium instance: %w", err)
+	}
+
+	c.instance = instance
 	return nil
 }
 
@@ -189,11 +218,31 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 		dpi = 150
 	}
 
+	// Set refresh interval for large PDFs
+	refreshEvery := opts.RefreshEvery
+	if refreshEvery <= 0 {
+		refreshEvery = 50 // Default: refresh every 50 pages
+	}
+
+	// Set pool size for converter
+	poolSize := opts.MaxPoolSize
+	if poolSize <= 0 {
+		poolSize = 2
+	}
+
 	// Track failed pages for retry
 	failedPages := make(map[int]string)
+	pagesProcessed := 0
 
 	// Render each page
 	for pageNum := startPage; pageNum <= endPage; pageNum++ {
+		// Periodically refresh the instance to avoid memory accumulation
+		if pagesProcessed > 0 && pagesProcessed%refreshEvery == 0 {
+			if err := c.refreshInstance(); err != nil {
+				// Log warning but continue
+				result.Errors = append(result.Errors, fmt.Sprintf("Warning: failed to refresh PDFium instance at page %d: %v", pageNum, err))
+			}
+		}
 		// Render page to image
 		pageRender, err := c.instance.RenderPageInDPI(&requests.RenderPageInDPI{
 			DPI: int(dpi),
@@ -243,6 +292,7 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 
 		result.Successful++
 		result.OutputFiles = append(result.OutputFiles, outputPath)
+		pagesProcessed++
 	}
 
 	// Retry failed pages with reduced DPI if requested
