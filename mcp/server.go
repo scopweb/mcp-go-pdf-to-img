@@ -6,6 +6,7 @@ import (
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/tu-usuario/pdf2img/pkg/converter"
+	"github.com/tu-usuario/pdf2img/pkg/splitter"
 )
 
 // MCPServer implements the Model Context Protocol server
@@ -112,6 +113,32 @@ func (s *MCPServer) GetTools() []Tool {
 				"required": []string{"pdf_path", "output_path"},
 			},
 		},
+		{
+			Name:        "pdf_split",
+			Description: "Extract a range of pages from a PDF into a new PDF file",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"pdf_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Path to the PDF file to split",
+					},
+					"output_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Path for the output PDF file",
+					},
+					"start_page": map[string]interface{}{
+						"type":        "integer",
+						"description": "Start page number (1-indexed, 0 for first page)",
+					},
+					"end_page": map[string]interface{}{
+						"type":        "integer",
+						"description": "End page number (1-indexed, 0 for last page)",
+					},
+				},
+				"required": []string{"pdf_path", "output_path"},
+			},
+		},
 	}
 }
 
@@ -124,6 +151,8 @@ func (s *MCPServer) ExecuteTool(toolName string, input json.RawMessage) (ToolRes
 		return s.handlePDFInfo(input)
 	case "pdf_compress":
 		return s.handlePDFCompress(input)
+	case "pdf_split":
+		return s.handlePDFSplit(input)
 	default:
 		return ToolResult{}, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -239,6 +268,44 @@ func (s *MCPServer) compressPDF(inputPath, outputPath string) error {
 
 	// Optimizar: comprimir imágenes, remover elementos innecesarios
 	return api.OptimizeFile(inputPath, outputPath, conf)
+}
+
+func (s *MCPServer) handlePDFSplit(input json.RawMessage) (ToolResult, error) {
+	var req struct {
+		PDFPath    string `json:"pdf_path"`
+		OutputPath string `json:"output_path"`
+		StartPage  int    `json:"start_page"`
+		EndPage    int    `json:"end_page"`
+	}
+
+	if err := json.Unmarshal(input, &req); err != nil {
+		return ToolResult{}, fmt.Errorf("invalid input: %w", err)
+	}
+
+	split := splitter.New()
+	opts := &splitter.SplitOptions{
+		InputPath:  req.PDFPath,
+		OutputPath: req.OutputPath,
+		StartPage:  req.StartPage,
+		EndPage:    req.EndPage,
+	}
+
+	result, err := split.Split(opts)
+	if err != nil {
+		return ToolResult{}, fmt.Errorf("failed to split PDF: %w", err)
+	}
+
+	response := map[string]interface{}{
+		"total_pages":     result.TotalPages,
+		"extracted_pages": result.ExtractedPages,
+		"output_path":     result.OutputPath,
+	}
+
+	responseJSON, _ := json.MarshalIndent(response, "", "  ")
+	return ToolResult{
+		Type:    "text",
+		Content: string(responseJSON),
+	}, nil
 }
 
 // Close closes the server and releases resources
