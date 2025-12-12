@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Separate `WarningPages` field in conversion results
   - Better diagnostic information for problematic pages
 
+### Maintenance (2025-12-05)
+- Updated all Go dependencies to latest versions
+- Fixed compilation error in `pkg/converter` due to `Cleanup` function check
+- Verified all tests pass with updated libraries
+
 - **Memory Management for Large PDFs (200+ pages)**
   - Increased default PDFium pool size from 1 to 2 instances
   - Periodic instance refresh every 50 pages (configurable)

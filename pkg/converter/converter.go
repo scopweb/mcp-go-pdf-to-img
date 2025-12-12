@@ -276,7 +276,7 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 		}
 
 		// Clean up render resources
-		if pageRender != nil && pageRender.Cleanup != nil {
+		if pageRender != nil {
 			defer pageRender.Cleanup()
 		}
 
@@ -367,9 +367,7 @@ func (c *Converter) Convert(opts *ConvertOptions) (*ConvertResult, error) {
 				}
 
 				// Clean up resources
-				if pageRender.Cleanup != nil {
-					pageRender.Cleanup()
-				}
+				pageRender.Cleanup()
 			}
 		}
 	}
