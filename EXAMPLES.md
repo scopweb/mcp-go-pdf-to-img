@@ -200,6 +200,23 @@ Obtiene información sobre un PDF.
 }
 ```
 
+#### Herramienta: `pdf_compress`
+
+Comprime un PDF para reducir su tamaño optimizando imágenes y removiendo elementos innecesarios.
+
+**Parámetros**:
+```json
+{
+  "pdf_path": "documento.pdf",        // Ruta del PDF a comprimir (requerido)
+  "output_path": "documento_comprimido.pdf"  // Ruta del PDF comprimido (requerido)
+}
+```
+
+**Respuesta**:
+```
+PDF compressed successfully. Output saved to: documento_comprimido.pdf
+```
+
 ### 3. Modo HTTP (Para pruebas)
 
 Si prefieres usar HTTP en lugar de Claude Desktop:

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/tu-usuario/pdf2img/pkg/converter"
 )
 
@@ -14,8 +15,8 @@ type MCPServer struct {
 
 // Tool represents an available MCP tool
 type Tool struct {
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
 	InputSchema map[string]interface{} `json:"inputSchema"`
 }
 
@@ -93,6 +94,24 @@ func (s *MCPServer) GetTools() []Tool {
 				"required": []string{"pdf_path"},
 			},
 		},
+		{
+			Name:        "pdf_compress",
+			Description: "Compress a PDF file to reduce its size",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"pdf_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Path to the PDF file to compress",
+					},
+					"output_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Path for the compressed PDF output",
+					},
+				},
+				"required": []string{"pdf_path", "output_path"},
+			},
+		},
 	}
 }
 
@@ -103,6 +122,8 @@ func (s *MCPServer) ExecuteTool(toolName string, input json.RawMessage) (ToolRes
 		return s.handlePDFToImages(input)
 	case "pdf_info":
 		return s.handlePDFInfo(input)
+	case "pdf_compress":
+		return s.handlePDFCompress(input)
 	default:
 		return ToolResult{}, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -136,13 +157,13 @@ func (s *MCPServer) handlePDFToImages(input json.RawMessage) (ToolResult, error)
 	}
 
 	opts := &converter.ConvertOptions{
-		InputPath:  req.PDFPath,
-		OutputDir:  req.OutputDir,
-		Format:     req.Format,
-		DPI:        req.DPI,
-		StartPage:  req.StartPage,
-		EndPage:    req.EndPage,
-		Prefix:     req.Prefix,
+		InputPath: req.PDFPath,
+		OutputDir: req.OutputDir,
+		Format:    req.Format,
+		DPI:       req.DPI,
+		StartPage: req.StartPage,
+		EndPage:   req.EndPage,
+		Prefix:    req.Prefix,
 	}
 
 	result, err := s.converter.Convert(opts)
@@ -187,6 +208,37 @@ func (s *MCPServer) handlePDFInfo(input json.RawMessage) (ToolResult, error) {
 		Type:    "text",
 		Content: string(responseJSON),
 	}, nil
+}
+
+func (s *MCPServer) handlePDFCompress(input json.RawMessage) (ToolResult, error) {
+	var req struct {
+		PDFPath    string `json:"pdf_path"`
+		OutputPath string `json:"output_path"`
+	}
+
+	if err := json.Unmarshal(input, &req); err != nil {
+		return ToolResult{}, fmt.Errorf("invalid input: %w", err)
+	}
+
+	// Usar pdfcpu para optimizar el PDF
+	err := s.compressPDF(req.PDFPath, req.OutputPath)
+	if err != nil {
+		return ToolResult{}, fmt.Errorf("failed to compress PDF: %w", err)
+	}
+
+	return ToolResult{
+		Type:    "text",
+		Content: fmt.Sprintf("PDF compressed successfully. Output saved to: %s", req.OutputPath),
+	}, nil
+}
+
+// compressPDF usa pdfcpu para optimizar y comprimir el PDF
+func (s *MCPServer) compressPDF(inputPath, outputPath string) error {
+	// Configurar opciones de optimización
+	conf := api.LoadConfiguration()
+
+	// Optimizar: comprimir imágenes, remover elementos innecesarios
+	return api.OptimizeFile(inputPath, outputPath, conf)
 }
 
 // Close closes the server and releases resources

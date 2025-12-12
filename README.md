@@ -10,6 +10,7 @@ A complete tool in Go to render PDF pages as PNG or JPG images. Includes both a 
 - 💻 **Complete CLI**: Command-line interface with multiple options
 - 🔌 **MCP Server**: Integration with Model Context Protocol
 - 📊 **PDF Information**: Command to get PDF file metadata
+- 🗜️ **PDF Compression**: Optimize and compress PDF files to reduce size
 - 🚀 **Pure Go**: No CGO, embedded WebAssembly, single binary (~18 MB)
 - 🔒 **Cross-platform**: Windows, Linux, macOS
 
