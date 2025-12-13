@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2025-12-13)
+- **PDF Compression Functionality Moved**
+  - PDF compression feature has been migrated to `mcp-go-pdf-tools`
+  - This project now focuses solely on PDF-to-image conversion with PDFium
+  - Removed `## PDF Compression Solution` section from SOLUTIONS.md
+
 ### Added (2025-11-11)
 - **Enhanced Error Handling for Large PDFs**
   - Detection and tracking of WASM "unreachable" errors
