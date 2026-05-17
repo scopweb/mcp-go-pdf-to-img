@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-05-17)
+- **Go Version**: Updated to Go 1.26.2
+
 ### Changed (2025-12-13)
 - **PDF Compression Functionality Moved**
   - PDF compression feature has been migrated to `mcp-go-pdf-tools`
@@ -226,6 +229,6 @@ Do not create public issues for security problems.
 
 ---
 
-**Last Updated**: 2025-11-11
+**Last Updated**: 2026-05-17
 **Current Version**: 1.0.0 (with unreleased improvements)
 **License**: Apache 2.0
