@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/tu-usuario/pdf2img/pkg/splitter"
+	"github.com/scopweb/mcp-go-pdf-to-img/pkg/splitter"
 )
 
 var (

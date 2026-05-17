@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
-	"github.com/tu-usuario/pdf2img/pkg/converter"
-	"github.com/tu-usuario/pdf2img/pkg/splitter"
+	"github.com/scopweb/mcp-go-pdf-to-img/pkg/converter"
+	"github.com/scopweb/mcp-go-pdf-to-img/pkg/splitter"
 )
 
 // MCPServer implements the Model Context Protocol server

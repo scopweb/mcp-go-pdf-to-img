@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/tu-usuario/pdf2img/pkg/converter"
+	"github.com/scopweb/mcp-go-pdf-to-img/pkg/converter"
 )
 
 var (

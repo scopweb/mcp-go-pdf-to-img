@@ -10,15 +10,15 @@ A complete tool in Go to render PDF pages as PNG or JPG images. Includes both a 
 - 💻 **Complete CLI**: Command-line interface with multiple options
 - 🔌 **MCP Server**: Integration with Model Context Protocol
 - 📊 **PDF Information**: Command to get PDF file metadata
-- 🗜️ **PDF Compression**: Optimize and compress PDF files to reduce size
 - 🚀 **Pure Go**: No CGO, embedded WebAssembly, single binary (~18 MB)
 - 🔒 **Cross-platform**: Windows, Linux, macOS
+- 🌐 **HTTP Server**: REST API microservice for IIS integration
 
 ## Installation
 
 ### Prerequisites
 
-- Go 1.21 or higher
+- **Go 1.26+**
 - **Note**: No external PDFium required, everything is embedded in the binary
 
 ### From source code
@@ -33,7 +33,7 @@ go build -o pdf2img ./cmd/pdf2img
 ### Global installation
 
 ```bash
-go install github.com/tu-usuario/pdf2img/cmd/pdf2img@latest
+go install github.com/scopweb/mcp-go-pdf-to-img/cmd/pdf2img@latest
 ```
 
 ## Usage
@@ -177,18 +177,110 @@ The MCP Server supports two modes:
 
 More examples in [EXAMPLES.md](EXAMPLES.md#mcp-server---ejemplos-de-integración).
 
+### HTTP Server (REST API)
+
+The HTTP server provides a REST API for PDF-to-image conversion, suitable for IIS integration with .NET applications.
+
+#### Quick Start
+
+```bash
+# Build the server
+go build -o server.exe ./cmd/server
+
+# Run with default settings (0.0.0.0:8080)
+./server.exe
+
+# Or with custom configuration
+HTTP_PORT=8080 CONVERT_DEFAULT_DPI=200 ./server.exe
+```
+
+#### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check, returns "ok" |
+| POST | `/api/v1/pdf/convert` | Convert PDF to images (returns ZIP) |
+| POST | `/api/v1/pdf/info` | Get PDF metadata |
+
+#### Convert Request
+
+```bash
+curl -X POST http://localhost:8080/api/v1/pdf/convert \
+  -F "file=@document.pdf" \
+  -F "dpi=150" \
+  -F "format=png" \
+  -F "start_page=1" \
+  -F "end_page=5"
+```
+
+**Parameters:**
+- `file` (required): PDF file
+- `dpi` (optional): DPI for rendering (default: 150)
+- `format` (optional): Output format, "png" or "jpg" (default: png)
+- `start_page` (optional): Start page number (default: 1)
+- `end_page` (optional): End page number (default: last page)
+- `prefix` (optional): Output file prefix (default: page_)
+- `retry` (optional): Retry failed pages with reduced DPI (default: false)
+
+**Response:** ZIP file containing the converted images.
+
+#### PDF Info Request
+
+```bash
+curl -X POST http://localhost:8080/api/v1/pdf/info -F "file=@document.pdf"
+```
+
+**Response (JSON):**
+```json
+{
+  "file": "document.pdf",
+  "pages": 25,
+  "file_size": "2.50 MB",
+  "width": 612,
+  "height": 792
+}
+```
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HTTP_HOST` | `0.0.0.0` | Server bind address |
+| `HTTP_PORT` | `8080` | Server port |
+| `HTTP_READ_TIMEOUT` | `30s` | Read timeout |
+| `HTTP_WRITE_TIMEOUT` | `120s` | Write timeout |
+| `HTTP_MAX_UPLOAD_SIZE` | `200MB` | Max upload size |
+| `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
+| `LOG_FORMAT` | `text` | Log format (text, json) |
+| `CONVERT_DEFAULT_DPI` | `150` | Default DPI |
+| `CONVERT_DEFAULT_FORMAT` | `png` | Default format |
+| `CONVERT_DEFAULT_POOL_SIZE` | `2` | PDFium pool size |
+| `CONVERT_REFRESH_EVERY` | `50` | Pages between instance refresh |
+| `CONVERT_RETRY_ON_FAILURE` | `false` | Retry failed pages |
+
 ## Project structure
 
 ```
 pdf2img/
 ├── cmd/
-│   └── pdf2img/
-│       └── main.go          # CLI application
+│   ├── pdf2img/
+│   │   └── main.go          # CLI application
+│   ├── mcp-server/
+│   │   └── main.go          # MCP server
+│   └── server/
+│       └── main.go          # HTTP REST API server
+├── internal/
+│   ├── config/
+│   │   └── config.go        # Server configuration
+│   └── logging/
+│       └── logger.go        # Logging utilities
 ├── mcp/
-│   └── server.go            # MCP server
+│   └── server.go            # MCP server implementation
 ├── pkg/
-│   └── converter/
-│       └── converter.go      # Shared conversion logic
+│   ├── converter/
+│   │   └── converter.go      # PDF to image conversion
+│   └── splitter/
+│       └── splitter.go       # PDF page splitting
 ├── go.mod                   # Dependencies
 └── README.md               # This file
 ```
@@ -339,11 +431,11 @@ Contributions are welcome. Please:
 
 ## Roadmap
 
+- [x] ~~REST HTTP API~~ (implemented as `cmd/server`)
 - [ ] Watermark support
 - [ ] OCR of rendered images
 - [ ] Parallel page processing
 - [ ] Rendered image caching
-- [ ] REST HTTP API
 - [ ] Password-protected PDF support
 
 ## References

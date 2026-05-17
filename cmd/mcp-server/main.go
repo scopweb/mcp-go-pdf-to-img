@@ -7,7 +7,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	localmcp "github.com/tu-usuario/pdf2img/mcp"
+	localmcp "github.com/scopweb/mcp-go-pdf-to-img/mcp"
 )
 
 func main() {

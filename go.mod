@@ -1,4 +1,4 @@
-module github.com/tu-usuario/pdf2img
+module github.com/scopweb/mcp-go-pdf-to-img
 
 go 1.26.2
 

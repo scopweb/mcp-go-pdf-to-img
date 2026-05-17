@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (2026-05-17)
 - **Go Version**: Updated to Go 1.26.2
+- **Module Path**: Changed to `github.com/scopweb/mcp-go-pdf-to-img`
+
+### Added (2026-05-17)
+- **HTTP Server** (`cmd/server`)
+  - REST API microservice for PDF-to-image conversion
+  - Endpoints: `GET /health`, `POST /api/v1/pdf/convert`, `POST /api/v1/pdf/info`
+  - Multipart file upload support
+  - ZIP download of converted images
+  - Configurable via environment variables
 
 ### Changed (2025-12-13)
 - **PDF Compression Functionality Moved**
